@@ -1,6 +1,7 @@
 package com.example.Rubrics.entity;
 
 import java.sql.Date;
+import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -45,9 +46,9 @@ public class Account {
   @Column(name = "verification_code", length = 64)
   private String verificationCode;
    
-  private boolean enabled;
+  private boolean enabled = false;
   
-  private Date createDay;
+  private Date createDay = Date.valueOf(LocalDate.now());;
   public Account() {
   }
 

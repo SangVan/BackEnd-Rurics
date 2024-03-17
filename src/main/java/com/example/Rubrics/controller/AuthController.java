@@ -110,6 +110,15 @@ public class AuthController {
 	@PostMapping("/signin")
 	public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequest loginRequest) {
 	    try {
+	    	Optional<Account> userOptional = userRepository.findByUsername(loginRequest.getUsername());
+	        if (!userOptional.isPresent()) {
+	            return ResponseEntity.badRequest().body(new MessageResponse("Tên đăng nhập không tồn tại."));
+	        }
+	        Account user = userOptional.get();
+
+	        if (!user.isEnabled()) {
+	            return ResponseEntity.badRequest().body(new MessageResponse("Vui lòng xác nhận email trước khi đăng nhập."));
+	        }
 	        Authentication authentication = authenticationManager.authenticate(
 	                new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword()));
 
@@ -117,21 +126,23 @@ public class AuthController {
 	        String jwt = jwtUtils.generateJwtToken(authentication);
 
 	        AccountDetailsImpl userDetails = (AccountDetailsImpl) authentication.getPrincipal();
-
-	        if (!userDetails.isEnabled()) {
-	            return ResponseEntity.badRequest().body(new MessageResponse("Vui lòng xác nhận email trước khi đăng nhập."));
-	        }
-
+	       if(!userDetails.isEnabled()) {
+	    	   return ResponseEntity.badRequest().body(new MessageResponse("Vui lòng xác nhận email trước khi đăng nhập."));
+	       }
+	       
+	     
 	        List<String> roles = userDetails.getAuthorities().stream().map(item -> item.getAuthority())
 	                .collect(Collectors.toList());
 
 	        return ResponseEntity.ok(new JwtResponse(jwt, userDetails.getId(), userDetails.getUsername(),
 	                userDetails.getEmail(), roles));
+		        
 	    } catch (Exception e) {
 	        e.printStackTrace();
 	        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new MessageResponse("Internal server error"));
 	    }
 	}
+
 
 	@PostMapping("/signup")
 	public ResponseEntity<?> registerUser(@Valid @RequestBody SignupRequest signUpRequest) {
@@ -150,7 +161,7 @@ public class AuthController {
 	Set<String> strRoles = signUpRequest.getRole();
 	Set<Role> roles = new HashSet<>();
 
-
+	
 	if (strRoles == null) {
 		Role userRole = roleRepository.findByName(ERole.ROLE_USER)
 				.orElseThrow(() -> new RuntimeException("Error: Role is not found."));
@@ -173,6 +184,8 @@ public class AuthController {
 		});
 	}
 	user.setRoles(roles);
+	user.setEnabled(false);
+	
 	userRepository.save(user);
 	
 	 // Generate and send verification code via email

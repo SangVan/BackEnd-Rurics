@@ -2,6 +2,7 @@ package com.example.Rubrics.request;
 
 
 
+import java.sql.Date;
 import java.util.Set;
 
 import jakarta.validation.constraints.Email;
@@ -25,7 +26,10 @@ public class SignupRequest {
     @Size(min = 6, max = 40)
     private String password;
   
-
+    
+  
+    
+    
     public String getUsername() {
         return username;
     }
@@ -57,7 +61,5 @@ public class SignupRequest {
     public void setRole(Set<String> role) {
       this.role = role;
     }
-
-
     
 }
